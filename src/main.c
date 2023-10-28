@@ -81,7 +81,7 @@ int main (int argc, char* argv[]) {
 
         printf("  -h             pass the literal hash of the password\n");
         printf("  -H             pass a file containing 1 or more hashed passwords\n");
-        printf("  -w             wordlist to check against the password(s)\n");
+        printf("  -w             plaintext wordlist to check against the password(s)\n");
         printf("  -a             supported hashing algorithm to use:\n");
         printf("                   sha256, md5\n");
         printf("\nYou must provide either -h or -H, along with -a and -w\n");
@@ -163,8 +163,13 @@ int main (int argc, char* argv[]) {
         }
     }
 
-    get_hash(hash, hash_alg, digest);
-    printf("Digest: %s\n", digest);
+    CRACK_CTX ctx;
+    ctx.wordlist = WORDLIST;
+    strncpy(ctx.algorithm, hash_alg, MAX_HASH_ALGO_LENGTH);
+
+    if (PASSWORD_LIST == NULL) {
+        crack_passwd(hash, &ctx);
+    }
 
     printf("[+] Cleaning up...");
     if (PASSWORD_LIST != NULL)
