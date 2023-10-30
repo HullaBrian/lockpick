@@ -37,7 +37,7 @@ int crack_passwd(const char* passwd, const CRACK_CTX* ctx) {
     if (ctx->wordlist == NULL) {
         return -1;
     }
-    printf("\n[+] Attempting to crack hash...\n");
+    printf("[+] Attempting to crack hash...\n");
 
     unsigned char line[65];
     unsigned char digest[65];

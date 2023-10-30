@@ -12,7 +12,6 @@
 const char* SUPPORTED_HASH_ALGS[] = {"SHA256", "MD5"};
 
 int verify_valid_call (int argc, char* argv[]) {
-    int h = 0;
     int total = 3;  // ensure that all required parameters are given. each required paramter detected decreases count by 1
     
     /*
@@ -24,20 +23,7 @@ int verify_valid_call (int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {  // detect if current argv is a parameter
             switch(argv[i][1]) {
-                case 'h':
-                    if (h == 2) {
-                        printf("You may not give both a literal hash and an input file!\n");
-                        return 0;
-                    }
-                    h = 1;
-                    total--;
-                    break;
                 case 'H':
-                    if (h == 1) {
-                        printf("You may not give both a literal hash and an input file!\n");
-                        return 0;
-                    }
-                    h = 2;
                     total--;
                     break;
                 case 'w':
@@ -79,7 +65,6 @@ int main (int argc, char* argv[]) {
         printf("Usage: pick [options]...\n");
         printf("\nRequired Parameters:\n");
 
-        printf("  -h             pass the literal hash of the password\n");
         printf("  -H             pass a file containing 1 or more hashed passwords\n");
         printf("  -w             plaintext wordlist to check against the password(s)\n");
         printf("  -a             supported hashing algorithm to use:\n");
@@ -90,7 +75,7 @@ int main (int argc, char* argv[]) {
         printf("  -t             number of threads to use\n");
         
         printf("\nExample usage:\n");
-        printf("$./pick -h 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8 -a SHA256 -w rockyou.txt\n\n");
+        printf("$./pick -H hash.txt -a SHA256 -w rockyou.txt\n\n");
         return 1;
     }
 
@@ -109,12 +94,6 @@ int main (int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {  // detect if current argv is a parameter
             switch(argv[i][1]) {
-                case 'h':
-                    strncpy(hash, argv[i + 1], MAX_HASH_LENGTH);
-                    hash[MAX_HASH_LENGTH] = '\0';
-                    printf("[+] Assigned literal hash\n");
-                    i++;
-                    break;
                 case 'H':
                     PASSWORD_LIST = fopen(argv[i + 1], "r");
                     if (PASSWORD_LIST != NULL) {
@@ -166,9 +145,13 @@ int main (int argc, char* argv[]) {
     CRACK_CTX ctx;
     ctx.wordlist = WORDLIST;
     strncpy(ctx.algorithm, hash_alg, MAX_HASH_ALGO_LENGTH);
+    printf("\n");
 
-    if (PASSWORD_LIST == NULL) {
-        crack_passwd(hash, &ctx);
+    char line[65];
+    while (!feof(PASSWORD_LIST)) {
+        fscanf(PASSWORD_LIST, "%s", line);
+        printf("[+] Current hash: '%s'\n", line);
+        crack_passwd(line, &ctx);
     }
 
     printf("[+] Cleaning up...");
