@@ -47,14 +47,11 @@ int verify_valid_call (int argc, char* argv[]) {
 }
 
 int main (int argc, char* argv[]) {
-    char hash[MAX_HASH_LENGTH + 1];
-    FILE* WORDLIST;
+    char words_f[20];
     FILE* PASSWORD_LIST;
     char hash_alg[MAX_HASH_ALGO_LENGTH + 1] = "|";
     int threads = 1;
-
-    unsigned char digest[65];
-    digest[64] = '\0';
+    int found = 0;
 
     if (argc == 1) {
         printf(INVALID_USAGE);
@@ -104,14 +101,8 @@ int main (int argc, char* argv[]) {
                     printf("[CRITICAL] COULD NOT OPEN FILE\n");
                     return 3;
                 case 'w':
-                    WORDLIST = fopen(argv[i + 1], "r");
-                    if (WORDLIST != NULL) {
-                        printf("[+] Opened hash list at '%s'\n", argv[i + 1]);
-                        i++;
-                        break;
-                    }
-                    printf("[CRITICAL] COULD NOT OPEN FILE\n");
-                    return 3;
+                    strncpy(words_f, argv[i + 1], 19);
+                    break;
                 case 'a':
                     for (int j = 0; j < NUM_SUPPORTED_HASH_ALGOS; j++) {
                         if (strcmp(argv[i + 1], SUPPORTED_HASH_ALGS[j]) == 0) {
@@ -143,7 +134,9 @@ int main (int argc, char* argv[]) {
     }
 
     CRACK_CTX ctx;
-    ctx.wordlist = WORDLIST;
+    strncpy(ctx.fname, words_f, 19);
+    ctx.threads = threads;
+    ctx.found = &found;
     strncpy(ctx.algorithm, hash_alg, MAX_HASH_ALGO_LENGTH);
     printf("\n");
 
@@ -151,14 +144,15 @@ int main (int argc, char* argv[]) {
     while (!feof(PASSWORD_LIST)) {
         fscanf(PASSWORD_LIST, "%s", line);
         printf("[+] Current hash: '%s'\n", line);
+        strncpy(ctx.passwd, line, 64);
+        ctx.passwd[64] = '\0';
+        found = 0;
         crack_passwd(line, &ctx);
     }
 
     printf("[+] Cleaning up...");
     if (PASSWORD_LIST != NULL)
         fclose(PASSWORD_LIST);
-    if (WORDLIST != NULL)
-        fclose(WORDLIST);
     printf("done!\n");
 
     printf("Exiting...\n");
